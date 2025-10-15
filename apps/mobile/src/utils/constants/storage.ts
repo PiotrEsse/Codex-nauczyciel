@@ -3,6 +3,7 @@ export const ASYNC_STORAGE_KEYS = {
   FLAGS: 'flags.languageTutor',
   LAST_SESSION_ID: 'cache.lastSessionId',
   SESSION_HISTORY: 'sessions.languageTutor',
+  LOG_EVENTS: 'logs.events',
   DB_VERSION: 'db.version'
 };
 

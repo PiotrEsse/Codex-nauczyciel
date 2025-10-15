@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 
+import { LogService } from '@services/logging/logService';
 import {
   StorageService,
   type SessionHintRecord,
@@ -53,6 +54,9 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     if (currentSession && status !== 'completed') {
       if (status === 'paused') {
         set({ status: 'active' });
+        void LogService.info('session', 'Resumed paused session', {
+          sessionId: currentSession.session.id
+        });
       }
       return currentSession;
     }
@@ -60,6 +64,12 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     await StorageService.saveSession(entry);
     await StorageService.setLastSessionId(entry.session.id);
     set({ currentSession: entry, status: 'active' });
+    void LogService.info('session', 'Started new session', {
+      sessionId: entry.session.id,
+      targetLanguage: entry.session.targetLanguage,
+      learnerLevel: entry.session.learnerLevel,
+      mode: entry.session.mode
+    });
     return entry;
   },
   async endSession() {
@@ -77,15 +87,24 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     await StorageService.saveSession(endedEntry);
     await StorageService.setLastSessionId(endedEntry.session.id);
     set({ currentSession: endedEntry, status: 'completed' });
+    void LogService.info('session', 'Session completed', {
+      sessionId: endedEntry.session.id,
+      turns: endedEntry.session.turnsCount,
+      hints: endedEntry.session.hintsCount
+    });
   },
   pauseSession() {
     if (get().status === 'active') {
       set({ status: 'paused' });
+      const sessionId = get().currentSession?.session.id;
+      void LogService.info('session', 'Session paused', sessionId ? { sessionId } : undefined);
     }
   },
   resumeSession() {
     if (get().status === 'paused') {
       set({ status: 'active' });
+      const sessionId = get().currentSession?.session.id;
+      void LogService.info('session', 'Session resumed', sessionId ? { sessionId } : undefined);
     }
   },
   async recordTurn(turn) {
@@ -95,6 +114,10 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       return;
     }
     set({ currentSession: updated });
+    void LogService.info('session', 'Recorded conversation turn', {
+      sessionId: session.session.id,
+      speaker: turn.speaker
+    });
   },
   async recordHint(hint) {
     const session = await get().startSession();
@@ -103,6 +126,9 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       return;
     }
     set({ currentSession: updated });
+    void LogService.info('session', 'Recorded session hint', {
+      sessionId: session.session.id
+    });
   },
   async updateNotes(notes) {
     const { currentSession } = get();
@@ -112,9 +138,13 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     const updated = await StorageService.updateSessionMetadata(currentSession.session.id, { notes });
     if (updated) {
       set({ currentSession: updated });
+      void LogService.info('session', 'Updated session notes', {
+        sessionId: updated.session.id
+      });
     }
   },
   reset() {
     set({ currentSession: undefined, status: 'idle' });
+    void LogService.info('session', 'Session state reset');
   }
 }));

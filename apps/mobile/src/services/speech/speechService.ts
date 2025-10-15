@@ -1,6 +1,7 @@
 import Voice, { SpeechErrorEvent, SpeechResultsEvent } from '@react-native-voice/voice';
 import * as Speech from 'expo-speech';
 
+import { LogService } from '@services/logging/logService';
 import { useSettingsStore } from '@state/settingsStore';
 
 export type SpeechStatus = 'idle' | 'recording' | 'processing';
@@ -25,12 +26,18 @@ class SpeechServiceClass {
     if (!event.value?.[0]) {
       return;
     }
+    void LogService.info('speech', 'Received speech recognition result', {
+      transcript: event.value[0]
+    });
     this.onResult?.(event.value[0]);
     this.status = 'idle';
   };
 
   private handleSpeechError = (event: SpeechErrorEvent) => {
     const error = new Error(event.error?.message ?? 'Speech recognition error');
+    void LogService.error('speech', 'Speech recognition error', {
+      message: error.message
+    });
     this.onError?.(error);
     this.status = 'idle';
   };
@@ -43,9 +50,15 @@ class SpeechServiceClass {
     this.onResult = onResult;
     this.onError = onError;
     const { targetLanguage, speech } = useSettingsStore.getState();
+    void LogService.info('speech', 'Starting speech capture', {
+      provider: speech.stt,
+      targetLanguage
+    });
     if (speech.stt === 'whisper') {
       // Whisper integration will replace this placeholder once the networking layer is ready.
-      this.onError?.(new Error('Whisper capture not implemented yet. Switch to system STT.'));
+      const whisperError = new Error('Whisper capture not implemented yet. Switch to system STT.');
+      void LogService.warn('speech', 'Whisper capture requested before implementation');
+      this.onError?.(whisperError);
       this.status = 'idle';
       return;
     }
@@ -58,11 +71,13 @@ class SpeechServiceClass {
     }
     await Voice.stop();
     this.status = 'processing';
+    void LogService.info('speech', 'Stopped listening');
   }
 
   async cancel() {
     await Voice.cancel();
     this.status = 'idle';
+    void LogService.info('speech', 'Cancelled speech capture');
   }
 
   speak(text: string) {
@@ -70,6 +85,10 @@ class SpeechServiceClass {
       audio: { ttsRate },
       targetLanguage
     } = useSettingsStore.getState();
+    void LogService.info('speech', 'Playing synthesized speech', {
+      language: targetLanguage,
+      ttsRate
+    });
     Speech.speak(text, {
       rate: ttsRate,
       language: targetLanguage

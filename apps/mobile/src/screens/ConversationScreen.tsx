@@ -5,6 +5,7 @@ import type { StyleProp, TextStyle, ViewStyle } from 'react-native';
 
 import { RootStackParamList } from '@navigation/RootNavigator';
 import { conversationEngine, type ConversationTurn } from '@services/llm/conversationEngine';
+import { LogService } from '@services/logging/logService';
 import { SpeechService } from '@services/speech/speechService';
 import {
   type SessionHintRecord,
@@ -55,6 +56,9 @@ export const ConversationScreen: React.FC<Props> = ({ navigation }) => {
 
   const ensureSessionId = useCallback(async () => {
     const session = await startSession();
+    void LogService.info('conversation', 'Ensured active session', {
+      sessionId: session.session.id
+    });
     return session.session.id;
   }, [startSession]);
 
@@ -62,6 +66,7 @@ export const ConversationScreen: React.FC<Props> = ({ navigation }) => {
     conversationEngine.reset();
     setTurns([]);
     let mounted = true;
+    void LogService.info('conversation', 'Conversation screen mounted');
     (async () => {
       if (!mounted) {
         return;
@@ -75,6 +80,7 @@ export const ConversationScreen: React.FC<Props> = ({ navigation }) => {
         hintResetTimeout.current = null;
       }
       SpeechService.cancel();
+      void LogService.info('conversation', 'Conversation screen unmounted');
       void endSession();
     };
   }, [endSession, startSession]);
@@ -92,6 +98,7 @@ export const ConversationScreen: React.FC<Props> = ({ navigation }) => {
       const cleanedTranscript = transcript.trim();
       if (!cleanedTranscript) {
         setStatusMessage('We did not catch that. Try again.');
+        void LogService.warn('conversation', 'Empty transcript received');
         return;
       }
       const sessionId = await ensureSessionId();
@@ -111,6 +118,10 @@ export const ConversationScreen: React.FC<Props> = ({ navigation }) => {
         createdAt: userTurn.createdAt
       };
       await recordTurn(userRecord);
+      void LogService.info('conversation', 'Recorded user utterance', {
+        sessionId,
+        length: cleanedTranscript.length
+      });
       setStatusMessage('Thinking...');
 
       try {
@@ -132,8 +143,16 @@ export const ConversationScreen: React.FC<Props> = ({ navigation }) => {
         };
         await recordTurn(aiRecord);
         SpeechService.speak(reply);
+        void LogService.info('conversation', 'Delivered AI reply', {
+          sessionId,
+          length: reply.length
+        });
       } catch (error) {
         console.warn('Failed to generate AI reply', error);
+        void LogService.error('conversation', 'Failed to generate AI reply', {
+          sessionId,
+          message: error instanceof Error ? error.message : 'Unknown error'
+        });
         Alert.alert('Something went wrong', 'We could not craft a reply. Please try again.');
       } finally {
         setStatusMessage(MICROPHONE_IDLE_TEXT);
@@ -144,6 +163,9 @@ export const ConversationScreen: React.FC<Props> = ({ navigation }) => {
 
   const handleSpeechError = useCallback((error: Error) => {
     setStatusMessage(MICROPHONE_IDLE_TEXT);
+    void LogService.error('conversation', 'Speech error surfaced to user', {
+      message: error.message
+    });
     Alert.alert('We could not understand you', error.message);
   }, []);
 
@@ -154,6 +176,10 @@ export const ConversationScreen: React.FC<Props> = ({ navigation }) => {
     await ensureSessionId();
     setIsRecording(true);
     setStatusMessage(MICROPHONE_RECORDING_TEXT);
+    void LogService.info('conversation', 'Microphone pressed', {
+      reason: isMicDisabled ? 'disabled' : 'recording',
+      paused: isPaused
+    });
     try {
       await SpeechService.startListening({
         onResult: handleSpeechResult,
@@ -173,17 +199,20 @@ export const ConversationScreen: React.FC<Props> = ({ navigation }) => {
     }
     setIsRecording(false);
     await SpeechService.stopListening();
+    void LogService.info('conversation', 'Microphone released');
   }, [isRecording]);
 
   const handleTogglePause = useCallback(async () => {
     if (sessionStatus === 'paused') {
       resumeSession();
       setStatusMessage(MICROPHONE_IDLE_TEXT);
+      void LogService.info('conversation', 'Session resumed from quick action');
     } else {
       await SpeechService.stopListening();
       pauseSession();
       setIsRecording(false);
       setStatusMessage('Session paused');
+      void LogService.info('conversation', 'Session paused from quick action');
     }
   }, [pauseSession, resumeSession, sessionStatus]);
 
@@ -193,6 +222,7 @@ export const ConversationScreen: React.FC<Props> = ({ navigation }) => {
     }
     setIsHintLoading(true);
     setStatusMessage('Preparing a hint...');
+    void LogService.info('conversation', 'Hint requested');
     let success = false;
     try {
       const sessionId = await ensureSessionId();
@@ -213,9 +243,16 @@ export const ConversationScreen: React.FC<Props> = ({ navigation }) => {
         setStatusMessage(MICROPHONE_IDLE_TEXT);
         hintResetTimeout.current = null;
       }, 1500);
+      void LogService.info('conversation', 'Hint delivered', {
+        sessionId,
+        textLength: hint.targetText.length
+      });
       success = true;
     } catch (error) {
       console.warn('Failed to prepare hint', error);
+      void LogService.error('conversation', 'Hint generation failed', {
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
       Alert.alert('Hint unavailable', 'Please try again in a moment.');
     } finally {
       if (!success) {
@@ -226,6 +263,7 @@ export const ConversationScreen: React.FC<Props> = ({ navigation }) => {
   }, [ensureSessionId, isHintLoading, recordHint]);
 
   const handleEndSession = useCallback(() => {
+    void LogService.info('conversation', 'End session prompt shown');
     Alert.alert('End session?', 'You can review your progress on the home screen.', [
       { text: 'Cancel', style: 'cancel' },
       {
@@ -234,6 +272,7 @@ export const ConversationScreen: React.FC<Props> = ({ navigation }) => {
         onPress: async () => {
           await SpeechService.stopListening();
           await endSession();
+          void LogService.info('conversation', 'Session ended from conversation screen');
           navigation.goBack();
         }
       }
