@@ -11,17 +11,19 @@
 - Scenariusze: wybór języków, rozmowa głosowa z AI, otrzymywanie podpowiedzi i korekt.
 
 ## 3. Funkcjonalności MVP
-1. **Onboarding**: wybór języka docelowego, języka ojczystego, poziomu oraz celów.
-2. **Sesja konwersacyjna**: push-to-talk, STT → LLM → TTS, adaptacja trudności, opcjonalne podpowiedzi w języku ojczystym.
-3. **Informacja zwrotna**: korekty wymowy, gramatyki, sugestie słownictwa.
-4. **Zarządzanie sesją**: pauza/wznowienie, historia transkryptów, podstawowe statystyki.
-5. **Dostępność**: tryb tekstowy jako fallback, regulacja prędkości mowy TTS.
+1. **Ekran startowy**: centralny przycisk „Rozpocznij rozmowę” oraz podgląd aktualnych ustawień językowych.
+2. **Menu konfiguracji**: wybór języka docelowego, języka ojczystego, poziomu ucznia oraz preferowanych usług STT/TTS (natywne silniki lub zewnętrzne API takie jak Whisper/ElevenLabs). Klucze do usług chmurowych zapisywane lokalnie.
+3. **Sesja konwersacyjna**: push-to-talk, STT → LLM → TTS, adaptacja trudności, opcjonalne podpowiedzi w języku ojczystym. Dla uproszczenia MVP korzystamy z jednego scenariusza rozmowy „Small Talk”, który ewoluuje wraz z postępami ucznia.
+4. **Informacja zwrotna**: korekty wymowy, gramatyki, sugestie słownictwa, wskazówki w języku ojczystym na żądanie.
+5. **Zarządzanie sesją**: pauza/wznowienie, zapis skrótu rozmowy (ostatnie X wymian) w lokalnym pliku JSON, podstawowe statystyki (czas rozmowy, liczba wypowiedzi).
+6. **Dostępność**: tryb tekstowy jako fallback, regulacja prędkości mowy TTS.
 
 ## 4. Pipeline Audio (MVP)
 1. Naciśnięcie przycisku „Mów” → nagranie audio.
-2. Przesłanie próbki bezpośrednio do wybranej usługi STT (lub cienkiego proxy) i konwersja na tekst.
-3. Orkiestrator rozmowy + LLM.
-4. Generacja odpowiedzi w TTS i odtworzenie w aplikacji.
+2. W zależności od konfiguracji: przekazanie audio do natywnego `SpeechRecognizer/SFSpeechRecognizer` **lub** wysłanie strumienia do zewnętrznej usługi (np. Whisper API) przez lekki moduł HTTP.
+3. Orkiestrator rozmowy + LLM (OpenAI GPT-4o mini) pracujący w pamięci aplikacji; historie konwersacji przechowywane lokalnie.
+4. Generacja odpowiedzi w TTS: natywny `TextToSpeech/AVSpeechSynthesizer` albo zewnętrzne API (np. ElevenLabs, Azure). W menu ustawień użytkownik wskazuje dostawcę i ewentualne klucze.
+5. Odtworzenie audio i równoległe zapisanie tekstu w lokalnym repozytorium.
 
 ## 5. Silnik Konwersacyjny AI
 - Utrzymanie stanu sesji i profilu ucznia.
@@ -39,25 +41,28 @@
 
 ## 8. Rekomendowany Stos Technologiczny
 ### Aplikacja mobilna
-- React Native (TypeScript), React Query, Zustand/Recoil, natywne moduły audio, Expo/NativeBase.
+- **React Native (TypeScript) + Expo (tryb managed)** jako najszybsza droga do zbudowania natywnej aplikacji bez konieczności konfiguracji Xcode/Android Studio na starcie.
+- React Query do obsługi zapytań sieciowych, Zustand do lokalnego stanu sesji, `expo-speech` oraz `react-native-voice`/`@react-native-voice/voice` do integracji z natywnymi modułami audio.
+- Ekrany: `HomeScreen` (start/stop rozmowy), `SettingsScreen` (języki, poziom, wybór dostawców STT/TTS, pola na klucze API), `ConversationScreen` (historia wymian, wskazówki).
 
 ### Backend
-- **Na potrzeby MVP brak dedykowanego backendu i bazy danych.** Aplikacja komunikuje się bezpośrednio z usługą LLM/STT/TTS lub przez bardzo cienką funkcję pośredniczącą (serverless), jeśli wymaga tego polityka kluczy API.
-- Jeśli potrzebne będzie logowanie ruchu, można rozważyć prosty serwer proxy zapisujący lekkie logi w plikach – bez relacyjnej bazy danych.
+- **Brak dedykowanego backendu** – aplikacja łączy się bezpośrednio z usługami LLM/STT/TTS. Dla bezpieczeństwa kluczy można opcjonalnie użyć pojedynczej funkcji serverless (np. Cloudflare Workers) jako proxy.
+- Logi i diagnostyka zapisywane do lokalnych plików JSON (z opcją eksportu przez systemowe menu „Udostępnij”).
 
 ### AI i Mowa
-- LLM: GPT-4o / GPT-4o mini (z możliwością wymiany).
-- STT: w pierwszej kolejności natywne moduły (`SpeechRecognizer`, `SFSpeechRecognizer`). Chmurowe rozwiązanie (np. Whisper API) włączamy tylko, gdy dokładność okaże się niewystarczająca.
-- TTS: natywne silniki (`TextToSpeech`, `AVSpeechSynthesizer`) z możliwością rozszerzenia o chmurowe głosy premium w późniejszym etapie.
+- LLM: GPT-4o mini (lub zamiennie inny model kompatybilny z API OpenAI). Logika promptów utrzymywana w aplikacji.
+- STT: możliwość przełączania pomiędzy natywnym rozpoznawaniem mowy a zewnętrznym API (Whisper, AssemblyAI). Moduł konfiguracyjny przechowuje klucze i adresy endpointów w lokalnym magazynie.
+- TTS: natywne silniki jako domyślne, z możliwością aktywacji chmurowych głosów (np. ElevenLabs) poprzez tę samą warstwę konfiguracji.
 
 ### Infrastruktura
-- Brak wymogów serwerowych poza ewentualną funkcją proxy dla kluczy API.
-- Automatyczne testy i analityka mogą być prowadzone ręcznie na podstawie eksportowanych plików.
+- Zarządzanie zależnościami i buildami przez Expo EAS (OTA updates). W razie potrzeby zejście do bare workflow umożliwia bezpośrednie użycie natywnych SDK.
+- Testy manualne na urządzeniach fizycznych; automatyzację można dodać później.
 
 ## 9. Architektura Systemu
-- Aplikacja mobilna (Onboarding, Conversation, History + audio) z lokalnym magazynem danych.
-- Bezstanowe wywołania do usług STT/TTS/LLM (np. OpenAI) – bez utrzymywania własnego serwera aplikacyjnego.
-- Pliki i konfiguracja przechowywane na urządzeniu użytkownika.
+- Aplikacja mobilna z trzema modułami UI: Home (kontrola rozmowy), Settings (konfiguracja języków i dostawców), Conversation (podgląd transkryptu i wskazówki).
+- Warstwa `SpeechService` wybierająca w czasie rzeczywistym natywne lub chmurowe STT/TTS w zależności od ustawień użytkownika.
+- `ConversationEngine` utrzymujący kontekst czatu i adaptację poziomu, zapisujący streszczenia do lokalnego repozytorium.
+- Warstwa `Storage` oparta o AsyncStorage/SQLite w celu przechowywania ustawień, skrótów rozmów i cache audio (dla TTS z chmury).
 
 ## 10. Harmonogram
 - **MVP (0–8 tyg.)**: funkcje opisane wyżej, identyfikacja użytkownika na podstawie danych lokalnych (np. UUID zapisany w pliku), ręczna obserwowalność (np. eksport transkryptów).
