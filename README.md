@@ -1,2 +1,9 @@
 # Codex-nauczyciel
-Nauczyciel języka
+
+Materiały planistyczne dla koncepcji konwersacyjnego nauczyciela języków.
+
+## Dokumentacja
+- [Specyfikacja produktu i techniczna](./docs/specyfikacja.md) – opis ekranów (Home/Settings/Conversation) oraz pipeline audio z możliwością wyboru natywnych lub chmurowych usług.
+- [Opcje głosowe i magazynowania danych dla MVP](./docs/voice-and-storage-options.md) – porównanie dostawców STT/TTS, plan konfiguracji kluczy API i lokalnego przechowywania danych.
+- [Plan rozwoju aplikacji](./docs/development-plan.md) – harmonogram etapów, kamienie milowe, role oraz zasady prowadzenia projektu.
+- [Ocena gotowości do implementacji](./docs/implementation-readiness.md) – analiza luk i rekomendacje działań przygotowawczych przed startem developmentu.
