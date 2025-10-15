@@ -15,3 +15,4 @@ Materiały planistyczne dla koncepcji konwersacyjnego nauczyciela języków.
 - [Testing & QA Plan](./docs/testing-plan.md) – macierz urządzeń, kryteria akceptacji oraz checklisty regresji.
 - [Pre-Release Checklist](./docs/release-checklist.md) – lista kontroli przed publikacją buildów MVP.
 - [Technical Spike Plan – Speech Loop](./docs/technical-spikes.md) – zadania i kryteria sukcesu dla walidacji STT/TTS.
+- [Immediate Next Steps](./docs/next-steps.md) – priorytety operacyjne przed startem Sprintu 1.
