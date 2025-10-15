@@ -32,11 +32,23 @@
 | **Cloud backend (Postgres/Firestore)** | Centralized storage for users and sessions | • Enables multi-device sync, analytics, user accounts | • Requires auth, backend deployment, security considerations | Delay until after MVP validation unless remote analytics are critical. |
 
 ### Practical MVP Plan
-1. **Persist locally**: Store language selections, proficiency level, and recent conversation summaries using `AsyncStorage` or a small file. This avoids backend work while letting testers resume sessions.
+1. **Persist locally**: Store language selections, proficiency level, and recent conversation summaries using `AsyncStorage`, a JSON file or a lightweight SQLite table. This avoids backend work while letting testers resume sessions.
 2. **Export for feedback**: Provide a simple "Export session" action that writes transcripts to a shareable file. Manual export supports qualitative research without infrastructure.
 3. **Upgrade path**: When you need collaborative features or remote analytics, migrate to a hosted database. Keep local storage schema modular to ease migration (e.g., wrap all persistence in a repository layer).
 
-## 4. Prioritized Recommendations
+## 4. Native App vs PWA for Voice Features
+
+| Kryterium | Aplikacja natywna (React Native / Swift / Kotlin) | PWA (Web Speech API) |
+| --- | --- | --- |
+| **Dostępność TTS** | Pełny dostęp do `TextToSpeech` (Android) i `AVSpeechSynthesizer` (iOS); działa offline po pobraniu głosów. | Web Speech Synthesis dostępny w Chrome/Edge, ograniczony w Safari/Firefox; wymaga aktywnego okna. |
+| **Dostępność STT** | `SpeechRecognizer` (Android) i `SFSpeechRecognizer` (iOS) z dedykowanymi pozwoleniami; można łączyć z bibliotekami RN. | Web Speech Recognition nie jest wspierany w Safari na iOS; w Chrome wymaga połączenia z siecią i częstych restartów. |
+| **Uprawnienia / UX** | Jednorazowe nadanie dostępu do mikrofonu, możliwość działania w tle, lepsza kontrola nad audio. | Przeglądarki wymagają każdorazowych zgód; brak stabilnego działania w tle, ograniczenia autoplay audio. |
+| **Magazyn danych** | Swobodny zapis w plikach/SQLite poprzez natywne API; łatwe backupy lokalne. | Ograniczony rozmiar Storage API, brak bezpośredniego dostępu do plików, złożone zarządzanie eksportem. |
+| **Czas wdrożenia MVP** | Gotowe biblioteki RN (`react-native-voice`, `react-native-tts`, `expo-speech`) redukują czas implementacji. | Należy budować obejścia dla braku wsparcia STT na części urządzeń; konieczne scenariusze alternatywne. |
+
+**Wniosek**: dla MVP nastawionego na urządzenia mobilne i wymagającego niezawodnego TTS/STT szybszą i pewniejszą drogą jest aplikacja natywna (np. React Native). PWA można traktować jako przyszły kanał dostępu, gdy funkcjonalność zostanie zweryfikowana i zidentyfikowana potrzeba wersji przeglądarkowej.
+
+## 5. Prioritized Recommendations
 1. **Adopt native TTS/STT first** to minimize cost and accelerate prototyping. Validate conversational flow and pedagogy before investing in premium audio quality.
 2. **Instrument feedback**: Ask testers about speech clarity and recognition accuracy. Their responses guide whether to invest in cloud speech services.
 3. **Keep storage simple**: Use on-device storage for MVP, coupled with optional manual export for research. Plan an abstraction layer so moving to a backend later requires minimal refactoring.
