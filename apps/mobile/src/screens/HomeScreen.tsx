@@ -1,8 +1,10 @@
+import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { RootStackParamList } from '@navigation/RootNavigator';
+import { StorageService, type SessionHistoryEntry } from '@services/storage/storageService';
 import { useSettingsStore } from '@state/settingsStore';
 import { LanguageOption, SUPPORTED_LANGUAGES } from '@utils/constants/languages';
 
@@ -13,6 +15,34 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
 export const HomeScreen = ({ navigation }: Props) => {
   const { targetLanguage, nativeLanguage, learnerLevel } = useSettingsStore();
+  const [lastSession, setLastSession] = useState<SessionHistoryEntry | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      (async () => {
+        const [latest] = await StorageService.getRecentSessions(1);
+        if (!active) {
+          return;
+        }
+        setLastSession(latest ?? null);
+      })();
+      return () => {
+        active = false;
+      };
+    }, [])
+  );
+
+  const formatDuration = useCallback((startedAt: number, endedAt?: number) => {
+    const totalMs = (endedAt ?? Date.now()) - startedAt;
+    const minutes = Math.floor(totalMs / 60000);
+    const seconds = Math.floor((totalMs % 60000) / 1000);
+    return `${minutes}m ${seconds.toString().padStart(2, '0')}s`;
+  }, []);
+
+  const sessionModeLabel = useCallback((mode: SessionHistoryEntry['session']['mode']) => {
+    return mode === 'whisper-stt' ? 'Whisper STT' : 'Native STT';
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -27,6 +57,21 @@ export const HomeScreen = ({ navigation }: Props) => {
         <Pressable style={styles.settingsButton} onPress={() => navigation.navigate('Settings')}>
           <Text style={styles.settingsButtonText}>Adjust settings</Text>
         </Pressable>
+      </View>
+      <View style={styles.sessionCard}>
+        <Text style={styles.sessionTitle}>Last session</Text>
+        {lastSession ? (
+          <>
+            <Text style={styles.sessionStat}>
+              Duration: {formatDuration(lastSession.session.startedAt, lastSession.session.endedAt)}
+            </Text>
+            <Text style={styles.sessionStat}>Turns: {lastSession.session.turnsCount}</Text>
+            <Text style={styles.sessionStat}>Hints: {lastSession.session.hintsCount}</Text>
+            <Text style={styles.sessionStat}>Mode: {sessionModeLabel(lastSession.session.mode)}</Text>
+          </>
+        ) : (
+          <Text style={styles.sessionHelper}>No sessions yet. Start a conversation to begin learning.</Text>
+        )}
       </View>
       <Pressable style={styles.primaryButton} onPress={() => navigation.navigate('Conversation')}>
         <Text style={styles.primaryButtonText}>Start conversation</Text>
@@ -91,5 +136,30 @@ const styles = StyleSheet.create({
   settingsButtonText: {
     color: '#2563eb',
     fontWeight: '500'
+  },
+  sessionCard: {
+    marginTop: 24,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2
+  },
+  sessionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginBottom: 12
+  },
+  sessionStat: {
+    fontSize: 14,
+    color: '#475569'
+  },
+  sessionHelper: {
+    fontSize: 14,
+    color: '#94a3b8'
   }
 });

@@ -1,9 +1,11 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 
 import { RootStackParamList } from '@navigation/RootNavigator';
+import { StorageService } from '@services/storage/storageService';
+import { useSessionStore } from '@state/sessionStore';
 import { useSettingsStore } from '@state/settingsStore';
 import { LEARNER_LEVELS, SUPPORTED_LANGUAGES, type LanguageOption } from '@utils/constants/languages';
 
@@ -35,6 +37,9 @@ export const SettingsScreen: React.FC<Props> = () => {
   const [localApiKey, setLocalApiKey] = useState(whisperApiKey ?? '');
   const [localEndpoint, setLocalEndpoint] = useState(whisperEndpoint ?? '');
   const [isSavingKey, setIsSavingKey] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isClearingHistory, setIsClearingHistory] = useState(false);
+  const resetSession = useSessionStore((state) => state.reset);
 
   const validateApiKey = useCallback((value: string) => {
     if (!value) {
@@ -61,6 +66,63 @@ export const SettingsScreen: React.FC<Props> = () => {
     () => STT_OPTIONS.find((option) => option.value === speech.stt)?.label ?? 'Unknown',
     [speech.stt]
   );
+
+  const handleExportLatest = useCallback(async () => {
+    if (isExporting) {
+      return;
+    }
+    setIsExporting(true);
+    try {
+      const [latest] = await StorageService.getRecentSessions(1);
+      if (!latest) {
+        Alert.alert('No sessions yet', 'Start a conversation to generate session logs.');
+        return;
+      }
+      const payload = StorageService.buildSessionExportPayload(latest);
+      console.log('[LanguageTutor][SessionExport]', JSON.stringify(payload, null, 2));
+      Alert.alert('Export ready', 'Latest session JSON was printed to the debug console.');
+    } finally {
+      setIsExporting(false);
+    }
+  }, [isExporting]);
+
+  const handleViewLogs = useCallback(async () => {
+    const sessions = await StorageService.getRecentSessions(5);
+    if (sessions.length === 0) {
+      Alert.alert('No history found', 'Conversations will appear here once you talk to Lumi.');
+      return;
+    }
+    const summary = sessions
+      .map((entry) => {
+        const started = new Date(entry.session.startedAt).toLocaleString();
+        return `${started} • ${entry.session.turnsCount} turns • ${entry.session.hintsCount} hints`;
+      })
+      .join('\n');
+    Alert.alert('Recent sessions', summary);
+  }, []);
+
+  const handleClearHistory = useCallback(() => {
+    if (isClearingHistory) {
+      return;
+    }
+    Alert.alert('Clear all session history?', 'This will remove locally stored conversations.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Clear history',
+        style: 'destructive',
+        onPress: async () => {
+          setIsClearingHistory(true);
+          try {
+            await StorageService.clearSessionHistory();
+            resetSession();
+            Alert.alert('History cleared', 'All stored sessions were deleted.');
+          } finally {
+            setIsClearingHistory(false);
+          }
+        }
+      }
+    ]);
+  }, [isClearingHistory, resetSession]);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -147,6 +209,32 @@ export const SettingsScreen: React.FC<Props> = () => {
           <Switch value={audio.normalize} onValueChange={setNormalizeAudio} />
         </View>
       </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Data & Debug</Text>
+        <Pressable
+          style={styles.debugButton}
+          onPress={handleExportLatest}
+          disabled={isExporting}
+        >
+          <Text style={styles.debugButtonText}>{isExporting ? 'Preparing export…' : 'Export latest session'}</Text>
+        </Pressable>
+        <Pressable style={styles.debugButton} onPress={handleViewLogs}>
+          <Text style={styles.debugButtonText}>View recent sessions</Text>
+        </Pressable>
+        <Pressable
+          style={[styles.debugButton, styles.debugButtonDanger]}
+          onPress={handleClearHistory}
+          disabled={isClearingHistory}
+        >
+          <Text style={styles.debugButtonDangerText}>
+            {isClearingHistory ? 'Clearing…' : 'Clear session history'}
+          </Text>
+        </Pressable>
+        <Text style={styles.helper}>
+          Exports are logged to the development console. Use the clear action to remove all local transcripts.
+        </Text>
+      </View>
     </ScrollView>
   );
 };
@@ -210,5 +298,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center'
+  },
+  debugButton: {
+    marginTop: 12,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: '#e2e8f0',
+    alignItems: 'center'
+  },
+  debugButtonText: {
+    color: '#1e293b',
+    fontWeight: '600'
+  },
+  debugButtonDanger: {
+    backgroundColor: '#fee2e2'
+  },
+  debugButtonDangerText: {
+    color: '#b91c1c',
+    fontWeight: '600'
   }
 });
