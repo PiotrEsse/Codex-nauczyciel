@@ -21,18 +21,20 @@ applicable.
 
 ## 2. Prepare the Development Environment
 
-1. **Bootstrap the Expo React Native project** following `docs/getting-started.md`.
-   - Initialize repository structure (`apps/mobile`, shared config, etc.).
-   - Add TypeScript, ESLint, Prettier, Jest, and basic CI configuration (even if
-     CI will be wired later).
-2. **Implement local storage scaffolding** based on `docs/data-schemas.md`.
-   - Create AsyncStorage helpers for settings and session notes.
-   - Stub SQLite module (optional) to be filled once session history feature is
-     prioritized.
-3. **Set up configuration surfaces** in the app skeleton.
-   - Settings screen with options for: target language, native language, user
-     level, STT provider (native vs Whisper), and API key entry.
-   - Persist changes immediately and confirm they survive app reload.
+- [x] **Bootstrap the Expo React Native project** following `docs/getting-started.md`.
+  - Initialize repository structure (`apps/mobile`, shared config, etc.).
+  - Add TypeScript, ESLint, Prettier, Jest, and basic CI configuration (even if
+    CI will be wired later).
+- [x] **Implement local storage scaffolding** based on `docs/data-schemas.md`.
+  - Create AsyncStorage helpers for settings and session notes.
+  - Stub SQLite module (optional) to be filled once session history feature is
+    prioritized.
+- [x] **Set up configuration surfaces** in the app skeleton.
+  - Settings screen with options for: target language, native language, user
+    level, STT provider (native vs Whisper), and API key entry.
+  - Persist changes immediately and confirm they survive app reload.
+  - Surface debug tooling for session history and event logs so testers can
+    share context quickly.
 
 ## 3. Coordinate Team Operations
 

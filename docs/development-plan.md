@@ -8,6 +8,18 @@
 - Dane użytkownika (ustawienia, skróty rozmów) przechowywane lokalnie (AsyncStorage/SQLite/plik JSON).
 - Wersja MVP ma pozwolić na ewaluację doświadczenia konwersacyjnego z prawdziwymi użytkownikami.
 
+## Status wdrożenia (aktualizacja)
+- ✅ **Etap 0 – Przygotowanie** zakończony: repozytorium Expo z konfiguracją TypeScript/ESLint/Prettier/Jest jest gotowe,
+  a podstawowa dokumentacja deweloperska została uzupełniona.
+- ✅ **Nawigacja i layout** (Etap 1) zaimplementowane zgodnie z makietami — aplikacja posiada działające ekrany Home,
+  Conversation oraz Settings spięte przez React Navigation.
+- ✅ **Konfiguracja lokalnego storage** (Etap 1) dostarczona: ustawienia, historia sesji i klucze Whisper są zapisywane z
+  użyciem AsyncStorage oraz SecureStore.
+- ✅ **Moduł logowania zdarzeń** (Etap 1) dodany w bieżącej iteracji — zdarzenia są utrwalane w AsyncStorage i dostępne
+  z poziomu ustawień (podgląd + eksport do logów deweloperskich).
+- 🔜 **Etap 2 – Integracje mowy**: kolejny krok to dokończenie obsługi mikrofonu (w tym Whisper) i natywnego TTS zgodnie
+  z wynikami spike'ów wydajnościowych.
+
 ## 2. Etapy rozwoju
 ### Etap 0 – Przygotowanie (1 tydzień)
 | Zadanie | Opis | Artefakty/Definition of Done |
