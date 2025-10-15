@@ -27,7 +27,7 @@
 | Zadanie | Opis | Definition of Done |
 | --- | --- | --- |
 | Natywne STT/TTS | Warstwa `SpeechService` obsługująca Android SpeechRecognizer & TextToSpeech oraz iOS SFSpeechRecognizer & AVSpeechSynthesizer. | Można przeprowadzić rozmowę lokalnie (bez LLM), transkrypt i odczyt działają. |
-| Integracja zewnętrznych API | Obsługa Whisper (STT) i jednego TTS (np. ElevenLabs) w `SpeechService`. | Możliwość przełączania dostawcy w ustawieniach, klucze zapisywane w SecureStore. |
+| Integracja zewnętrznych API | Obsługa Whisper (STT) w `SpeechService`, w tym upload audio i obsługa błędów. | Możliwość przełączania dostawcy STT w ustawieniach, klucz zapisywany w SecureStore. |
 | Zarządzanie uprawnieniami | Obsługa żądań mikrofonu/głosu, komunikaty błędów. | Ścieżki odmowy uprawnień przetestowane manualnie. |
 
 ### Etap 3 – Silnik konwersacyjny (3 tygodnie)

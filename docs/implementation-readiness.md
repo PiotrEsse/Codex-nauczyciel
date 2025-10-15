@@ -6,31 +6,29 @@
 
 | Obszar | Co już mamy | Luki / ryzyka | Status gotowości |
 | --- | --- | --- | --- |
-| **Zakres produktu & funkcje** | Spójna specyfikacja MVP (ekrany Home/Settings/Conversation, adaptacyjna rozmowa). | Wymagane doprecyzowanie pojedynczych scenariuszy rozmów (np. przykładowe dialogi, zakres Small Talk). | ✅ Gotowe do startu, detalizować podczas implementacji. |
-| **UX/UI** | Opis ekranów i funkcji w specyfikacji. | Brak finalnych makiet UI, brak wytycznych dot. ikonografii/kolorystyki, brak nagranego user flow. | ⚠️ Częściowo gotowe – potrzebne makiety low/high-fidelity i nazewnictwo elementów. |
-| **Warstwa mowy (STT/TTS)** | Zidentyfikowane opcje natywne i chmurowe, lista bibliotek RN/Expo. | Brak decyzji które języki głosy testujemy na start, brak PoC sprawdzającego latencję natywnych bibliotek na docelowych urządzeniach. | ⚠️ Częściowo gotowe – zalecany szybki spike techniczny. |
-| **Integracja LLM** | Wybrany model (GPT-4o mini), opis roli ConversationEngine. | Brak szkicu promptów systemowych, brak decyzji o strategii skracania historii i limitach tokenów. | ⚠️ Częściowo gotowe – wymagane warsztaty nad promptem i polityką kontekstu. |
-| **Adaptacja poziomu i feedback** | Założenia heurystyk w specyfikacji i planie (analiza długości, błędów). | Nieokreślone algorytmy/metryki, brak przykładowych reguł i komunikatów w obydwu językach. | ⚠️ Częściowo gotowe – przygotować katalog reguł i komunikatów. |
-| **Lokalne przechowywanie danych** | Wskazane technologie (AsyncStorage/SQLite), opis konfiguracji i bezpieczeństwa kluczy. | Brak docelowego schematu danych (np. struktura pliku ustawień, format transkryptów), brak polityki czyszczenia danych. | ⚠️ Częściowo gotowe – zaprojektować kontrakty danych. |
-| **Konfiguracja usług zewnętrznych** | Lista dostawców, zalecenie użycia SecureStore, ustawienia w menu. | Brak decyzji czy wymagamy logowania/kluczy w MVP, brak instrukcji dla testerów jak zdobyć klucze. | ⚠️ Częściowo gotowe – opracować checklistę konfiguracji testerów. |
-| **Środowisko developerskie & CI** | Plan zakłada Expo managed, lint w CI. | Brak konkretnej konfiguracji CI, brak ustalonego standardu kodu (ESLint/Prettier), brak instrukcji onboardingu devów. | ⚠️ Częściowo gotowe – przygotować dokument „Getting Started”. |
-| **Testy & QA** | Ogólny plan testów (jednostkowe, integracyjne, użyteczność) w development-plan.md. | Brak kryteriów akceptacji dla scenariuszy STT/TTS, brak listy urządzeń testowych, brak automatycznych testów e2e. | ⚠️ Częściowo gotowe – doprecyzować scenariusze QA. |
-| **Wydanie MVP / Beta** | Kamienie milowe i KPI zdefiniowane. | Brak planu wsparcia testerów (kanał feedbacku, SLA), brak checklisty publikacji (EAS build, testflight). | ⚠️ Częściowo gotowe – opracować checklistę release. |
+| **Zakres produktu & funkcje** | Spójna specyfikacja MVP (ekrany Home/Settings/Conversation, adaptacyjna rozmowa). | Brak. Zakres potwierdzony przez zespół. | ✅ Gotowe do startu. |
+| **UX/UI** | Tekstowe makiety przepływów i edge-case'ów w `docs/ux-conversation-flows.md`. | Wysokiej wierności mockupy graficzne do dopracowania równolegle z developmentem. | ✅ Wystarczające na start. |
+| **Warstwa mowy (STT/TTS)** | Strategia natywny TTS + przełączalne STT (system / Whisper) w `docs/voice-and-storage-options.md`; plan spike'u w `docs/technical-spikes.md`. | Potrzebne wykonanie spike'u i zebranie metryk latencji. | ⚠️ Częściowo gotowe – spike w toku. |
+| **Integracja LLM** | Prompt skeleton, zasady adaptacji i korekcji w `docs/prompt-design.md`. | Testowe konwersacje do walidacji tonu i długości odpowiedzi. | ⚠️ Wymagana walidacja na próbkach. |
+| **Adaptacja poziomu i feedback** | Reguły adaptacji opisane w `docs/prompt-design.md`, scenariusze w `docs/ux-conversation-flows.md`. | Brak katalogu komunikatów w wielu językach – można tworzyć iteracyjnie. | ✅ Minimalny zakres gotowy. |
+| **Lokalne przechowywanie danych** | Schematy AsyncStorage/SecureStore/SQLite w `docs/data-schemas.md`. | Konieczne przygotowanie migracji startowej w kodzie (plan opisany). | ✅ Gotowe na start. |
+| **Konfiguracja usług zewnętrznych** | Szczegółowa checklista w `docs/whisper-configuration.md`. | Ustalić proces przydzielania kluczy testerom (formularz). | ✅ Gotowe – proces testerski do komunikacji. |
+| **Środowisko developerskie & CI** | `docs/getting-started.md` z narzędziami, standardem kodu, skrótami npm. | Skonfigurować realny pipeline CI w repo, gdy kod będzie dostępny. | ✅ Gotowe na start. |
+| **Testy & QA** | Plan testowy i kryteria akceptacji w `docs/testing-plan.md`. | Automatyzacja (Detox) odkładana po MVP. | ✅ Gotowe na start. |
+| **Wydanie MVP / Beta** | Checklisty release i QA w `docs/release-checklist.md`. | Trzeba przygotować szablon notatek z testów w repo (przed pierwszym release). | ✅ Wystarczające na sprint 1. |
 
 ## 2. Najważniejsze działania przed startem implementacji
 
-1. **Makiety UX + flow rozmowy** – przygotować interaktywne prototypy Home/Settings/Conversation oraz przykładową ścieżkę rozmowy z podpisanymi komunikatami i stanami mikrofonu.
-2. **Spike techniczny STT/TTS** – zbudować minimalny projekt RN/Expo nagrywający i odtwarzający audio przy użyciu wybranych bibliotek; zmierzyć latencję i jakość dla 2 docelowych języków.
-3. **Warsztaty nad promptem** – opracować system prompt, przykładowe polecenia użytkownika i odpowiedzi AI dla różnych poziomów, ustalić reguły adaptacji i limity historii.
-4. **Projekt schematu danych** – spisać strukturę `settings.json`, formatu transkryptów oraz zasady retencji (np. limit ostatnich 10 sesji).
-5. **Checklisty konfiguracyjne** – przygotować instrukcje pozyskania kluczy API (Whisper, ElevenLabs) oraz kroki konfiguracji w aplikacji dla testerów.
-6. **Onboarding zespołu** – utworzyć dokument „Getting Started” (narzędzia, komendy, standard kodu) i zaprojektować minimalną konfigurację CI (lint + build).
-7. **Plan testów praktycznych** – zdefiniować listę urządzeń (min. jeden Android, jeden iOS), scenariusze testowe STT/TTS i kryteria sukcesu dla M1/M2.
+1. **Przeprowadzić spike techniczny STT/TTS** zgodnie z `docs/technical-spikes.md` i zanotować wyniki w `docs/spike-results.md` (do utworzenia po spike'u).
+2. **Zweryfikować prompt** – przeprowadzić 3 przykładowe rozmowy (Beginner/Intermediate/Advanced) i zebrać wnioski w krótkim raporcie (dodatek do `docs/prompt-design.md`).
+3. **Przygotować proces dystrybucji kluczy Whisper** – lista testerów + instrukcje wysyłki (odwołanie do `docs/whisper-configuration.md`).
+4. **Wykorzystać szablon notatek testowych** `docs/testing-notes-template.md` w trakcie pierwszego cyklu QA.
+5. **Rozpocząć implementację** Expo projektu bazowego wraz z konfiguracją lint/tsc opisanych w `docs/getting-started.md`.
 
 ## 3. Rekomendacja
 
-- **Status ogólny:** jesteśmy blisko fazy implementacji, ale kilka kluczowych decyzji (UX, prompt, schemat danych, PoC mowy) wymaga dopracowania, aby uniknąć kosztownych zmian w trakcie developmentu.
-- **Proponowane podejście:** zakończyć powyższe działania przygotowawcze w krótkim sprincie „Etap 0.5”, a następnie rozpocząć implementację zgodnie z planem rozwoju. Dzięki temu zminimalizujemy ryzyko opóźnień i przeróbek.
+- **Status ogólny:** dokumentacja umożliwia start prac implementacyjnych. Pozostałe działania mają charakter operacyjny i mogą być realizowane równolegle z kodowaniem.
+- **Proponowane podejście:** rozpocząć sprint implementacyjny, równolegle realizując spike STT/TTS i walidację promptu. Wyniki dopisać do odpowiednich dokumentów, aby utrzymać aktualność wiedzy.
 
 ---
 **Status testów:** ⚠️ brak – dokument analityczny.
