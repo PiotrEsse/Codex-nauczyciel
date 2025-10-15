@@ -2,6 +2,15 @@
 
 Materiały planistyczne dla koncepcji konwersacyjnego nauczyciela języków.
 
+## Struktura repozytorium
+- `apps/mobile` – projekt Expo (TypeScript) z natywną aplikacją „Language Tutor” zgodną z dokumentacją w katalogu `docs/`.
+
+## Uruchomienie aplikacji mobilnej
+1. `cd apps/mobile`
+2. `npm install`
+3. `npm run start` – uruchamia serwer deweloperski Expo (Metro).
+4. `npm run ios` / `npm run android` – buduje aplikację na symulator/emulator zgodnie z opisem w `docs/getting-started.md`.
+
 ## Dokumentacja
 - [Specyfikacja produktu i techniczna](./docs/specyfikacja.md) – opis ekranów (Home/Settings/Conversation) oraz pipeline audio z możliwością wyboru natywnych lub chmurowych usług.
 - [Opcje głosowe i magazynowania danych dla MVP](./docs/voice-and-storage-options.md) – strategia natywnego TTS oraz przełączalnego STT (system vs Whisper) i plan lokalnego przechowywania.
