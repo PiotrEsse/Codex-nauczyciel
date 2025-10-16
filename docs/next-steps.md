@@ -54,7 +54,7 @@ applicable.
 Once the spike and prompt validation outcomes are captured:
 
 1. **Create Sprint 1 backlog** focusing on the conversational happy path:
-   - Microphone capture & Whisper/native STT integration.
+   - ✅ Microphone capture & Whisper/native STT integration (SpeechService obsługuje natywne rozpoznawanie oraz wysyłkę do Whisper wraz z testem w ustawieniach).
    - LLM request/response pipeline using the defined prompt blueprint.
    - Native TTS playback and transcript display.
    - Conversation screen interactions (push-to-talk, tips pane).

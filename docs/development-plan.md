@@ -17,8 +17,8 @@
   użyciem AsyncStorage oraz SecureStore.
 - ✅ **Moduł logowania zdarzeń** (Etap 1) dodany w bieżącej iteracji — zdarzenia są utrwalane w AsyncStorage i dostępne
   z poziomu ustawień (podgląd + eksport do logów deweloperskich).
-- 🔜 **Etap 2 – Integracje mowy**: kolejny krok to dokończenie obsługi mikrofonu (w tym Whisper) i natywnego TTS zgodnie
-  z wynikami spike'ów wydajnościowych.
+- 🚧 **Etap 2 – Integracje mowy**: działająca warstwa natywnego STT/TTS oraz obsługa Whisper (upload + test w ustawieniach);
+  kolejne iteracje obejmą pomiary latencji i ewentualne optymalizacje.
 
 ## 2. Etapy rozwoju
 ### Etap 0 – Przygotowanie (1 tydzień)

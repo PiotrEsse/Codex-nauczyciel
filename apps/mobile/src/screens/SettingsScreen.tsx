@@ -5,6 +5,7 @@ import { Picker } from '@react-native-picker/picker';
 
 import { RootStackParamList } from '@navigation/RootNavigator';
 import { LogService } from '@services/logging/logService';
+import { SpeechService } from '@services/speech/speechService';
 import { StorageService } from '@services/storage/storageService';
 import { useSessionStore } from '@state/sessionStore';
 import { useSettingsStore } from '@state/settingsStore';
@@ -42,6 +43,7 @@ export const SettingsScreen: React.FC<Props> = () => {
   const [isFetchingLogs, setIsFetchingLogs] = useState(false);
   const [isExportingLogs, setIsExportingLogs] = useState(false);
   const [isClearingHistory, setIsClearingHistory] = useState(false);
+  const [isTestingWhisper, setIsTestingWhisper] = useState(false);
   const resetSession = useSessionStore((state) => state.reset);
 
   const validateApiKey = useCallback((value: string) => {
@@ -152,6 +154,45 @@ export const SettingsScreen: React.FC<Props> = () => {
     }
   }, [isExportingLogs]);
 
+  const runWhisperTest = useCallback(async () => {
+    setIsTestingWhisper(true);
+    void LogService.info('settings', 'Running Whisper configuration test');
+    try {
+      const transcript = await SpeechService.runWhisperConfigurationTest();
+      if (transcript.trim().length === 0) {
+        Alert.alert('Test complete', 'The request finished but no speech was detected. Try again with a louder sample.');
+      } else {
+        Alert.alert('Whisper test transcript', transcript);
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unexpected error while testing Whisper.';
+      Alert.alert('Whisper test failed', message);
+      void LogService.error('settings', 'Whisper configuration test failed', { message });
+    } finally {
+      setIsTestingWhisper(false);
+    }
+  }, []);
+
+  const handleTestWhisper = useCallback(() => {
+    if (!whisperApiKey) {
+      Alert.alert('Missing Whisper key', 'Add your Whisper API key before running the test.');
+      return;
+    }
+    Alert.alert(
+      'Run Whisper test',
+      'We will record a short sample (about 3 seconds). Speak clearly in your target language once you press Start.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Start',
+          onPress: () => {
+            void runWhisperTest();
+          }
+        }
+      ]
+    );
+  }, [runWhisperTest, whisperApiKey]);
+
   const handleClearHistory = useCallback(() => {
     if (isClearingHistory) {
       return;
@@ -240,6 +281,15 @@ export const SettingsScreen: React.FC<Props> = () => {
         <Text style={styles.saveButton} onPress={isSavingKey ? undefined : handleSaveWhisperConfig}>
           {isSavingKey ? 'Saving...' : 'Save Whisper settings'}
         </Text>
+        <Pressable
+          style={[styles.debugButton, isTestingWhisper && styles.debugButtonDisabled]}
+          onPress={handleTestWhisper}
+          disabled={isTestingWhisper}
+        >
+          <Text style={styles.debugButtonText}>
+            {isTestingWhisper ? 'Testing Whisper…' : 'Run Whisper test recording'}
+          </Text>
+        </Pressable>
       </View>
 
       <View style={styles.section}>
@@ -379,6 +429,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: '#e2e8f0',
     alignItems: 'center'
+  },
+  debugButtonDisabled: {
+    opacity: 0.6
   },
   debugButtonText: {
     color: '#1e293b',
