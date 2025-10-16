@@ -14,6 +14,7 @@
 | `settings.audio` | object | `{ ttsRate: number (0.5-1.5), normalize: boolean }` |
 | `flags.onboardingCompleted` | boolean | Controls first-run overlay |
 | `cache.lastSessionId` | string | Primary key of the most recent session |
+| `logs.events` | array | Chronological list of debug log entries |
 
 ## 3. Secure Store Items
 | Key | Value |
@@ -79,3 +80,19 @@ CREATE TABLE metrics (
 - Validate language codes against supported list before saving.
 - Reject Whisper API key if not matching regex `^sk-[A-Za-z0-9]{32,}$` and show inline error.
 - Ensure session has at least one user and one AI turn before marking as complete.
+
+## 8. Log Events Format
+- Log entries są przechowywane jako obiekty JSON:
+
+```json
+{
+  "id": "log-1713361289123",
+  "timestamp": 1713361289123,
+  "level": "info",
+  "scope": "conversation",
+  "message": "User requested a hint",
+  "metadata": { "sessionId": "session-1713361200000" }
+}
+```
+- Maksymalnie 200 ostatnich zdarzeń jest utrzymywanych w AsyncStorage (najstarsze są usuwane).
+- Eksport logów z poziomu ustawień serializuje listę w kolejności malejącej według czasu.

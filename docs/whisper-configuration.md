@@ -12,18 +12,17 @@
 
 ## 3. App Configuration Steps
 1. Open Settings → Speech Services.
-2. Enable **Use Whisper STT** toggle.
-3. Paste API key into the **Whisper API Key** field (stored in secure store).
-4. Leave **Endpoint URL** as default `https://api.openai.com/v1/audio/transcriptions` unless instructed otherwise.
-5. Choose model `whisper-1` from dropdown.
-6. Tap **Run test recognition** → speak short sentence in target language.
-7. Verify transcript appears correctly. If request fails, check:
+2. Set **Speech-to-text provider** to **Whisper (OpenAI)**.
+3. Paste the key into **Whisper API Key** (stored in secure store) and adjust the endpoint if needed.
+4. Tap **Save Whisper settings** to persist the credentials.
+5. Use **Run Whisper test recording** – after pressing Start, speak a short sentence in the target language.
+6. Review the transcript shown in the confirmation dialog. If the request fails, check:
    - Network connectivity.
    - API key validity (HTTP 401 errors).
    - Rate limit headers (consider retry after delay).
 
 ## 4. Usage Guidelines
-- Audio uploaded as 16-bit PCM WAV, 16 kHz mono.
+- Audio uploaded as high-quality AAC (m4a) via Expo's recording APIs (Whisper accepts m4a/mp3/wav/webm).
 - Limit each utterance to ≤ 30 seconds for responsive UX.
 - Handle API errors gracefully: show toast with error and log in debug storage.
 - Cache last successful transcript for offline viewing, but do not store raw audio beyond active session.
